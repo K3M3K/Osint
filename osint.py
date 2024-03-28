@@ -1,20 +1,23 @@
 import subprocess
-from colorama import Fore, Style
 import os
+import time
 import sys
 import requests
 from bs4 import BeautifulSoup
-from colorama import Fore, Style
 import socket
 import urllib.parse
-import os
 import ssl
 import netifaces
+import whois
+from colorama import Fore, Style
+from requests.exceptions import RequestException
+
+
 
 def osint_tools_menu():
     print("Menu:")
-    print("1. Osint Tools")
-    print("2. Exit")
+    print(f"{Fore.GREEN}1. Osint Tools{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}2. Exit{Style.RESET_ALL}")
 
 def create_banner():
     banner = f'''
@@ -38,7 +41,7 @@ def call_osint():
     try:
         osint_tools()
     except Exception as e:
-        print(f"Failed to run osint tools: {e}")
+        print(f"{Fore.RED}Failed to run osint tools: {e}{Style.RESET_ALL}")
 
 def osint_tools():
     while True:
@@ -54,10 +57,11 @@ def osint_tools():
             print("Exiting program...")
             sys.exit()  
         else:
-            print("Invalid choice. Please try again.")
+            print(f"{Fore.RED}Invalid choice. Please try again.{Style.RESET_ALL}")
 
 if __name__ == "__main__":
     call_osint()
+
 
 
 def create_banner():
@@ -104,9 +108,9 @@ def check_security(domain_name):
         print("Security Information: Unable to retrieve security details")
 
 
-def search_google(query, num_results=25):
+def search_google(query, num_results=30, offset=0):
     url = "https://www.google.com/search"
-    params = {"q": query, "num": num_results}
+    params = {"q": query, "num": num_results, "start": offset}
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
 
     try:
@@ -119,46 +123,65 @@ def search_google(query, num_results=25):
     soup = BeautifulSoup(response.text, "html.parser")
     results = []
     for g in soup.find_all('div', class_='g'):
-        title = g.find('h3').text
+        title_tag = g.find('h3')
+        title = title_tag.text if title_tag else "No title"
         link = g.find('a')['href']
         snippet_tag = g.find(class_='VwiC3b')
         snippet = snippet_tag.text if snippet_tag else ""
         results.append({"title": title, "link": link, "snippet": snippet})
-        
+
     return results
 
 def search_by_name():
+    offset = 0
+    max_results = 30  # Maximum number of results to fetch
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         print(create_banner())
         print("\nOptions:")
-        print("[1] Continue searching by name")
-        print("[2] Return to main menu")
+        print(f"{Fore.GREEN}[1] Continue Search by Name{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[2] Return to main menu{Style.RESET_ALL}")
 
         choice = input("Choose an option: ")
 
         if choice == '1':
             os.system('cls' if os.name == 'nt' else 'clear')
             print(create_banner())  
-            query = input("\nSearch By Name: ")
+            query = input("\nSearch By Name: ").strip()  
+            if not query:  
+                print("Query cannot be empty. Please enter a valid query.")
+                input("Press Enter to continue...")
+                continue
+
             print("Searching...")
 
-            results = search_google(query)
+            results = []
+            try:
+                while offset < max_results:
+                    partial_results = search_google(query, offset=offset)
+                    if not partial_results:
+                        break
+                    results.extend(partial_results)
+                    offset += len(partial_results)
+                    time.sleep(2)  
 
-            if results:
-                print("\nResults:")
-                for i, item in enumerate(results, start=1):
-                    print(f"\nResult #{i}:")
-                    print(f"Title: {item['title']}")
-                    print(f"Link: {item['link']}")
-                    print(f"Snippet: {item['snippet']}")
-                    cleaned_url = clean_and_format_url(item['link'])
-                    print(f"Cleaned URL: {cleaned_url}")
+                if results:
+                    print("\nResults:")
+                    for i, item in enumerate(results, start=1):
+                        print(f"\nResult #{i}:")
+                        print(f"Title: {item['title']}")
+                        print(f"Link: {item['link']}")
+                        print(f"Snippet: {item['snippet']}")
+                        cleaned_url = clean_and_format_url(item['link'])
+                        print(f"Cleaned URL: {cleaned_url}")
+                        time.sleep(0.5)  # Slow down displaying results
+                else:
+                    print("No results found.")
 
-            else:
-                print("No results found.")
-
-            input("Press Enter to continue...")
+                input("Press Enter to continue...")
+            except KeyboardInterrupt:
+                print("\nSearch stopped by user.")
+                input("Press Enter to continue...")
         elif choice == '2':
             print("Returning to the main menu...")
             break
@@ -171,8 +194,8 @@ def search_social_media():
         os.system('cls' if os.name == 'nt' else 'clear')
         print(create_banner())
         print("\nOptions:")
-        print("[1] Continue searching social media")
-        print("[2] Return to main menu")
+        print(f"{Fore.GREEN}[1]Continue Search Social Media{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[2]Return to main menu{Style.RESET_ALL}")
 
         choice = input("Choose an option: ")
 
@@ -180,74 +203,90 @@ def search_social_media():
             os.system('cls' if os.name == 'nt' else 'clear')
             print(create_banner()) 
             query = input("\nSearch Social Media: ")
-            print("Searching...")
+            print("Searching... ", end="", flush=True)
+            animation = "|/-\\"
+            idx = 0
 
-            results = search_google(query)
+            try:
+                results = search_google(query)
+                if results:
+                    print("\nResults:")
+                    for i, item in enumerate(results, start=1):
+                        print(f"\nResult #{i}:")
+                        print(f"Title: {item['title']}")
+                        print(f"Link: {item['link']}")
+                        print(f"Snippet: {item['snippet']}")
+                        time.sleep(1)
+                else:
+                    print("No results found for social media accounts.")
 
-            if results:
-                print("\nResults:")
-                for i, item in enumerate(results, start=1):
-                    print(f"\nResult #{i}:")
-                    print(f"Title: {item['title']}")
-                    print(f"Link: {item['link']}")
-                    print(f"Snippet: {item['snippet']}")
-            else:
-                print("No results found for social media accounts.")
-
-            input("Press Enter to continue...")
+                input("Press Enter to continue...")
+            except KeyboardInterrupt:
+                print("\nSearch stopped by user.")
+                input("Press Enter to continue...")
         elif choice == '2':
             print("Returning to the main menu...")
             break
         else:
             print("Invalid choice. Please try again.")
             
+
+
 def search_with_operator():
+    offset = 0
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         print(create_banner())
         print("\nOptions:")
-        print("[1] Continue scanning")
-        print("[2] Return to recognition menu")
-
+        print(f"{Fore.GREEN}[1] Continue Scanning{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[2] Return to main menu{Style.RESET_ALL}")
         choice = input("Choose an option: ")
 
         if choice == '1':
             os.system('cls' if os.name == 'nt' else 'clear')
             print(create_banner())
             print("Continuing scanning...")
+            operator = input("Enter operator (e.g., site:example.com): ").strip()
+
+            if not operator:
+                print("Operator cannot be empty. Please enter a valid operator.")
+                input("Press Enter to return to the recognition menu...")
+                continue
+
+            print("Searching...")
+            
+            try:
+                results = search_google(operator, offset=offset)
+                if results:
+                    print("\nResults:")
+                    for i, item in enumerate(results, start=1):
+                        print(f"\nResult #{i}:")
+                        print(f"Title: {item['title']}")
+                        print(f"Link: {item['link']}")
+                        print(f"Snippet: {item['snippet']}")
+                        time.sleep(1)  # Introduce delay between each result
+                    print("\nNo more results.")
+                    input("Press Enter to return to the recognition menu...")
+                    offset += len(results)  # Increment offset for the next search
+                else:
+                    print("No results found.")
+            except KeyboardInterrupt:
+                print("\nSearch stopped by user.")
+            time.sleep(2)  # Delay the next search to slow down the process
+
         elif choice == '2':
             print("Returning to recognition menu...")
             break
         else:
             print("Invalid choice. Please try again.")
-
-        query = input("\nEnter search query:\n")
-        operator = input("Enter operator (e.g., site:example.com): ")
-        full_query = f"{query} {operator}"
-        print("Searching...")
-
-        results = search_google(full_query)
-
-        if results:
-            print("\nResults:")
-            for i, item in enumerate(results, start=1):
-                print(f"\nResult #{i}:")
-                print(f"Title: {item['title']}")
-                print(f"Link: {item['link']}")
-                print(f"Snippet: {item['snippet']}")
-
-            input("Press Enter to return to the recognition menu...")
-        else:
-            print("Failed to perform search.")
-
-
+            
 def dns_lookup():
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         print(create_banner())
         print("\nOptions:")
-        print("[1] Continue DNS lookup")
-        print("[2] Return to main menu")
+        print(f"{Fore.GREEN}[1] Continue DNS Look Up{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[2] Return to main menu{Style.RESET_ALL}")
 
         choice = input("Choose an option: ")
 
@@ -255,14 +294,34 @@ def dns_lookup():
             os.system('cls' if os.name == 'nt' else 'clear')
             print(create_banner())
             domain_name = input("\nEnter domain name to lookup: ")
+
+            if not domain_name.strip():
+                print("\nDomain name cannot be empty. Please enter a valid domain name.")
+                input("\nPress Enter to continue...")
+                continue
+
+            print("Performing DNS lookup... ", end="", flush=True)
+
             try:
                 ip_address = socket.gethostbyname(domain_name)
                 print(f"\nDNS lookup for {domain_name}:\nIP Address: {ip_address}")
+
+                domain_info = whois.whois(domain_name)
+                provider = domain_info.registrar
+
+                print(f"Provider: {provider}")
+
+                # Mendapatkan informasi expiration date
+                expiration_date = domain_info.expiration_date
+                if expiration_date:
+                    print(f"Expiration Date: {expiration_date}")
+                else:
+                    print("Expiration Date: Not available")
+
                 print("\nAdditional Information:")
                 print(f"Local IP Address: {socket.gethostbyname(socket.gethostname())}")
                 print("Server IP Address:", socket.gethostbyname(socket.gethostname()))
-                
-               
+
                 interfaces = netifaces.interfaces()
                 for interface in interfaces:
                     if interface != "lo":
@@ -271,25 +330,28 @@ def dns_lookup():
                             print("Network Address:", addresses[netifaces.AF_INET][0]['addr'])
                             break
                 print("Network Type:", netifaces.gateways()['default'][netifaces.AF_INET][1])
-                
+
                 check_security(domain_name)
             except socket.gaierror as e:
                 print(f"\nDNS lookup failed for {domain_name}: {e}")
+            except whois.parser.PywhoisError as e:
+                print(f"\nFailed to retrieve WHOIS information for {domain_name}: {e}")
             input("\nPress Enter to continue...")
         elif choice == '2':
             print("\nReturning to the main menu...")
             break
         else:
             print("\nInvalid choice. Please try again.")
+
             
 def home_menu():
     print(create_banner())
     print("\nMenu:")
-    print("[1] Search By Name")
-    print("[2] Search Social Media")
-    print("[3] Web Analytics")
-    print("[4] DNS Lookup")
-    print("[5] Back To Menu")
+    print(f"{Fore.GREEN}[1]Search by Name{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[2]Search Sosial Media{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[3]WEB Analyst{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[4]DNS Look Up{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[5]Back to menu{Style.RESET_ALL}")
 
 def main():
     while True:
@@ -306,20 +368,22 @@ def main():
         elif choice == "4":
             dns_lookup()
         elif choice == "5":
-            print("Returning to main menu...")
-
+            print("Returning to main menu")
             osint_tools()  
         else:
-            print("Invalid choice. Please try again.")
+            print(f"{Fore.RED}Invalid choice. Please try again.{Style.RESET_ALL}")
+
 def osint_tools_menu():
     print("Menu:")
-    print("1. Osint Tools")
-    print("2. Exit")
+    print(f"{Fore.GREEN}1. Osint Tools{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}2. Exit{Style.RESET_ALL}")
+
 def call_osint():
     try:
         osint_tools()
     except Exception as e:
-        print(f"Failed to run osint tools: {e}")
+        print(f"{Fore.RED}Failed to run osint tools: {e}{Style.RESET_ALL}")
+
 def osint_tools():
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')  
@@ -334,7 +398,7 @@ def osint_tools():
             print("Exiting program...")
             sys.exit() 
         else:
-            print("Invalid choice. Please try again.")
-            
+            print(f"{Fore.RED}Invalid choice. Please try again.{Style.RESET_ALL}")
+
 if __name__ == "__main__":
     main()
