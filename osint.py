@@ -3,6 +3,7 @@ import random
 import os
 import time
 import sys
+import whois
 import requests
 from bs4 import BeautifulSoup
 import socket
@@ -307,21 +308,33 @@ def dns_lookup():
             print("Performing DNS lookup... ", end="", flush=True)
 
             try:
+                
                 ip_address = socket.gethostbyname(domain_name)
                 print(f"\nDNS lookup for {domain_name}:\nIP Address: {ip_address}")
 
+                
                 domain_info = whois.whois(domain_name)
-                provider = domain_info.registrar
 
+                
+                provider = domain_info.get('registrar', 'Unknown')
                 print(f"Provider: {provider}")
+                expiration_date = domain_info.get('expiration_date', 'Not available')
+                print(f"Expiration Date: {expiration_date}")
 
-                # Mendapatkan informasi expiration date
-                expiration_date = domain_info.expiration_date
-                if expiration_date:
-                    print(f"Expiration Date: {expiration_date}")
-                else:
-                    print("Expiration Date: Not available")
+                # Reverse DNS Lookup
+                try:
+                    reverse_dns = socket.gethostbyaddr(ip_address)
+                    print(f"Reverse DNS Lookup: {reverse_dns[0]}")
+                except socket.herror:
+                    print("Reverse DNS Lookup: Not available")
 
+                # DNS Record Lookup
+                dns_records = socket.getaddrinfo(domain_name, None)
+                print("\nDNS Records:")
+                for record in dns_records:
+                    print(record)
+
+                # Additional Information
                 print("\nAdditional Information:")
                 print(f"Local IP Address: {socket.gethostbyname(socket.gethostname())}")
                 print("Server IP Address:", socket.gethostbyname(socket.gethostname()))
@@ -335,18 +348,19 @@ def dns_lookup():
                             break
                 print("Network Type:", netifaces.gateways()['default'][netifaces.AF_INET][1])
 
-                check_security(domain_name)
+                
             except socket.gaierror as e:
                 print(f"\nDNS lookup failed for {domain_name}: {e}")
-            except whois.parser.WhoisCommandFailed as e:
-                print(f"\nFailed to retrieve WHOIS information for {domain_name}: {e}")
+            except Exception as e:
+                print(f"\nFailed to retrieve DNS information for {domain_name}: {e}")
             input("\nPress Enter to continue...")
         elif choice == '2':
             print("\nReturning to the main menu...")
             break
         else:
             print("\nInvalid choice. Please try again.")
-                        
+
+dns_lookup()                        
 def home_menu():
     print(create_banner())
     print("\nMenu:")
