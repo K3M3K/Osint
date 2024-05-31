@@ -1,4 +1,5 @@
 import subprocess
+import random
 import os
 import time
 import sys
@@ -81,13 +82,10 @@ Osint Tools Script | This code was created with MR.0WL|
 Author : MR.0WL
 '''
     return banner
-
 def clean_and_format_url(url):
-    
     url_components = urllib.parse.urlparse(url)
     cleaned_url = urllib.parse.urlunparse(url_components)
     return cleaned_url
-
 
 def get_ssl_info(domain_name):
     context = ssl.create_default_context()
@@ -101,17 +99,22 @@ def check_security(domain_name):
         if response.status_code == 200:
             print("Security Information:")
             print("SSL/TLS Protocol:", response.connection.version)
-            print("SSL Certificate:", response.connection.cipher)
+            print("SSL Certificate:", response.connection.cipher())
         else:
             print("Security Information: Unable to retrieve security details")
     except Exception as e:
         print("Security Information: Unable to retrieve security details")
 
-
 def search_google(query, num_results=30, offset=0):
     url = "https://www.google.com/search"
     params = {"q": query, "num": num_results, "start": offset}
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"}
+    user_agents = [
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0.3 Safari/605.1.15",
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:89.0) Gecko/20100101 Firefox/89.0"
+    ]
+
+    headers = {"User-Agent": random.choice(user_agents)}
 
     try:
         response = requests.get(url, params=params, headers=headers)
@@ -125,8 +128,9 @@ def search_google(query, num_results=30, offset=0):
     for g in soup.find_all('div', class_='g'):
         title_tag = g.find('h3')
         title = title_tag.text if title_tag else "No title"
-        link = g.find('a')['href']
-        snippet_tag = g.find(class_='VwiC3b')
+        link_tag = g.find('a')
+        link = link_tag['href'] if link_tag else "No link"
+        snippet_tag = g.find('span', class_='aCOpRe')
         snippet = snippet_tag.text if snippet_tag else ""
         results.append({"title": title, "link": link, "snippet": snippet})
 
@@ -279,7 +283,7 @@ def search_with_operator():
             break
         else:
             print("Invalid choice. Please try again.")
-            
+                        
 def dns_lookup():
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -334,7 +338,7 @@ def dns_lookup():
                 check_security(domain_name)
             except socket.gaierror as e:
                 print(f"\nDNS lookup failed for {domain_name}: {e}")
-            except whois.parser.PywhoisError as e:
+            except whois.parser.WhoisCommandFailed as e:
                 print(f"\nFailed to retrieve WHOIS information for {domain_name}: {e}")
             input("\nPress Enter to continue...")
         elif choice == '2':
@@ -342,8 +346,7 @@ def dns_lookup():
             break
         else:
             print("\nInvalid choice. Please try again.")
-
-            
+                        
 def home_menu():
     print(create_banner())
     print("\nMenu:")
