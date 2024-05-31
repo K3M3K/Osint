@@ -355,7 +355,7 @@ def dns_lookup():
             input("\nPress Enter to continue...")
         elif choice == '2':
             print("\nReturning to the main menu...")
-            return  # Mengembalikan kontrol ke menu utama
+            break  # Mengembalikan kontrol ke menu utama
         else:
             print("\nInvalid choice. Please try again.")
             
