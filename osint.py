@@ -350,23 +350,25 @@ def dns_lookup():
 
             except socket.gaierror as e:
                 print(f"\nDNS lookup failed for {domain_name}: {e}")
-            except whois.parser.WhoisCommandFailed as e:
+            except whois.parser.PywhoisError as e:
                 print(f"\nFailed to retrieve WHOIS information for {domain_name}: {e}")
             input("\nPress Enter to continue...")
         elif choice == '2':
             print("\nReturning to the main menu...")
-            break
+            return  # Mengembalikan kontrol ke menu utama
         else:
             print("\nInvalid choice. Please try again.")
+            
+
                         
 def home_menu():
     print(create_banner())
     print("\nMenu:")
-    print(f"{Fore.GREEN}[1]Search by Name{Style.RESET_ALL}")
-    print(f"{Fore.GREEN}[2]Search Sosial Media{Style.RESET_ALL}")
-    print(f"{Fore.GREEN}[3]WEB Analyst{Style.RESET_ALL}")
-    print(f"{Fore.GREEN}[4]DNS Look Up{Style.RESET_ALL}")
-    print(f"{Fore.GREEN}[5]Back to menu{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[1] Search by Name{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[2] Search Sosial Media{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[3] WEB Analyst{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[4] DNS Look Up{Style.RESET_ALL}")
+    print(f"{Fore.GREEN}[5] Back to menu{Style.RESET_ALL}")
 
 def main():
     while True:
@@ -382,11 +384,13 @@ def main():
             search_with_operator()
         elif choice == "4":
             dns_lookup()
+            input("\nPress Enter to return to main menu...")  # Menunggu input sebelum kembali ke menu utama
         elif choice == "5":
             print("Returning to main menu")
             osint_tools()  
         else:
             print(f"{Fore.RED}Invalid choice. Please try again.{Style.RESET_ALL}")
+
 
 def osint_tools_menu():
     print("Menu:")
