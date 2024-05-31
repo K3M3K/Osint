@@ -349,10 +349,12 @@ def dns_lookup():
                 print("Network Type:", netifaces.gateways()['default'][netifaces.AF_INET][1])
 
             except socket.gaierror as e:
-                print(f"\nDNS lookup failed for {domain_name}: {e}")
+                    print(f"\nDNS lookup failed for {domain_name}: {e}")
+                    input("\nPress Enter to continue...")
             except whois.parser.PywhoisError as e:
-                print(f"\nFailed to retrieve WHOIS information for {domain_name}: {e}")
-            input("\nPress Enter to continue...")
+                    print(f"\nFailed to retrieve WHOIS information for {domain_name}: {e}")
+                input("\nPress Enter to continue...")
+
         elif choice == '2':
             print("\nReturning to the main menu...")
             break  # Mengembalikan kontrol ke menu utama
