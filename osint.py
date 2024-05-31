@@ -199,8 +199,8 @@ def search_social_media():
         os.system('cls' if os.name == 'nt' else 'clear')
         print(create_banner())
         print("\nOptions:")
-        print(f"{Fore.GREEN}[1]Continue Search Social Media{Style.RESET_ALL}")
-        print(f"{Fore.GREEN}[2]Return to main menu{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[1] Continue Search Social Media{Style.RESET_ALL}")
+        print(f"{Fore.GREEN}[2] Return to main menu{Style.RESET_ALL}")
 
         choice = input("Choose an option: ")
 
@@ -349,17 +349,16 @@ def dns_lookup():
                 print("Network Type:", netifaces.gateways()['default'][netifaces.AF_INET][1])
 
             except socket.gaierror as e:
-                    print(f"\nDNS lookup failed for {domain_name}: {e}")
-                    input("\nPress Enter to continue...")
+                print(f"\nDNS lookup failed for {domain_name}: {e}")
             except whois.parser.PywhoisError as e:
-                    print(f"\nFailed to retrieve WHOIS information for {domain_name}: {e}")
-                input("\nPress Enter to continue...")
-
+                print(f"\nFailed to retrieve WHOIS information for {domain_name}: {e}")
+            input("\nPress Enter to continue...")
+        
         elif choice == '2':
-            print("\nReturning to the main menu...")
-            break  # Mengembalikan kontrol ke menu utama
+            print("Returning to recognition menu...")
+            break
         else:
-            print("\nInvalid choice. Please try again.")
+            print("Invalid choice. Please try again.")
             
 
                         
@@ -386,7 +385,6 @@ def main():
             search_with_operator()
         elif choice == "4":
             dns_lookup()
-            input("\nPress Enter to return to main menu...")  # Menunggu input sebelum kembali ke menu utama
         elif choice == "5":
             print("Returning to main menu")
             osint_tools()  
