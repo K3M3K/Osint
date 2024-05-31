@@ -130,10 +130,11 @@ def search_google(query, num_results=30, offset=0):
         title_tag = g.find('h3')
         title = title_tag.text if title_tag else "No title"
         link_tag = g.find('a')
-        link = link_tag['href'] if link_tag else "No link"
+        link = link_tag.get('href', 'No link') if link_tag else "No link"
         snippet_tag = g.find('span', class_='aCOpRe')
         snippet = snippet_tag.text if snippet_tag else ""
         results.append({"title": title, "link": link, "snippet": snippet})
+
 
     return results
 
